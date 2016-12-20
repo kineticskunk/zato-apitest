@@ -58,16 +58,16 @@ config_functions = {
     '@': get_value_from_config
 }
 
-config_patterns = {
-    '$': re.compile(r'\$\{(\w+)\}'),
-    '#': re.compile(r'\#\{(\w+)\}'),
-    '@': re.compile(r'\@\{(\w+)\}')
-}
-
 def obtain_values(func):
     """ Functions decorated with this one will be able to obtain values from config sources prefixed with $, # or @.
     """
     def inner(ctx, *args, **kwargs):
+
+        def replacer(match):
+            config_key = match.groups()[1]
+            config_func = config_functions[config_key]
+            return str(config_func(ctx, match.groups()[2]))
+
         for kwarg, value in kwargs.items():
             if value:
                 config_key = value[0]
@@ -75,10 +75,7 @@ def obtain_values(func):
                     config_func = config_functions[config_key]
                     kwargs[kwarg] = config_func(ctx, value[1:])
                 else:
-                    for config_key,pattern in config_patterns.items():
-                        for match in pattern.findall(value):
-                            config_func = config_functions[config_key]
-                            kwargs[kwarg] = re.sub(r'\%s\{%s\}' % (config_key, match), str(config_func(ctx, match)), value)
+                    kwargs[kwarg] = re.sub(r'((\$|\#|\@)\{(\w+)\})', replacer, value)
 
         return func(ctx, *args, **kwargs)
     return inner
@@ -196,7 +193,7 @@ comparison_operators = {'equal to': '=',
                         'greater than': '>',
                         'less or equal to': '<=',
                         'greater or equal to': '>='}
-                                    
+
 def wrap_into_quotes(values):
     return '\'{}\''.format('\', \''.join(values.split(', ')))
 

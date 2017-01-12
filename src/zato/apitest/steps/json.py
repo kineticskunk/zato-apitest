@@ -112,6 +112,11 @@ def given_json_pointer_is_now(ctx, path, format):
 def given_json_pointer_is_utc_now(ctx, path, format):
     set_pointer(ctx, path, util.utcnow(format=ctx.zato.date_formats[format]))
 
+@given('JSON Pointer "{path}" in request is UTC now "{format}" minus one hour')
+@util.obtain_values
+def given_json_pointer_is_utc_now_minus_one_hour(ctx, path, format):
+    set_pointer(ctx, path, util.utcnow_minus_hour(format=ctx.zato.date_formats[format]))
+
 @given('JSON Pointer "{path}" in request is a random date after "{date_start}" "{format}"')
 @util.obtain_values
 def given_json_pointer_is_rand_date_after(ctx, path, date_start, format):

@@ -202,6 +202,13 @@ def then_json_pointer_isnt_empty(ctx, path):
     actual = get_pointer(ctx.zato.response.data_impl, path, INVALID)
     assert actual != INVALID, 'Path `{}` Should not be empty'.format(path)
 
+@then('JSON Pointer "{path}" isn\'t an empty list')
+@util.obtain_values
+def then_json_pointer_is_boolean_true(ctx, path):
+    actual = get_pointer(ctx.zato.response.data_impl, path, [])
+    assert isinstance(actual, list), 'Path `{}` should be a list'.format(path)
+    assert actual, 'Path `{}` should not be an empty list'.format(path)
+
 @then('JSON Pointer "{path}" is one of "{value}"')
 @util.obtain_values
 def then_json_pointer_is_one_of(ctx, path, value):

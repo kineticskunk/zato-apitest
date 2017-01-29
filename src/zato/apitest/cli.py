@@ -50,7 +50,7 @@ def init(ctx, path):
 @click.argument('path', type=click.Path(exists=True, file_okay=False, resolve_path=True))
 @click.pass_context
 def run(ctx, path):
-    _run.handle(path, ctx.args)
+    sys.exit(_run.handle(path, ctx.args))
 
 @click.command()
 @click.argument('path', default=tempfile.gettempdir(), type=click.Path(exists=True, file_okay=False, resolve_path=True))

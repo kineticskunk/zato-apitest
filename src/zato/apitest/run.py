@@ -34,4 +34,4 @@ def handle(path, args=None):
     conf = Configuration(behave_options)
     conf.paths = [os.path.join(path, 'features')]
     runner = Runner(conf)
-    runner.run()
+    return runner.run()

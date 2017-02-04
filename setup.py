@@ -14,7 +14,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 from setuptools import setup, find_packages
 
-version = '1.10'
+version = '1.11'
 
 LONG_DESCRIPTION = """
 zato-apitest is a friendly command line tool for creating beautiful tests of HTTP-based REST, XML and SOAP APIs with as little
@@ -88,7 +88,7 @@ setup(
       scripts = ['src/zato/apitest/console/apitest'],
 
       author = 'Dariusz Suchojad',
-      author_email = 'dsuch at zato.io',
+      author_email = 'dsuch@zato.io',
       url = 'https://github.com/zatosource/zato-apitest',
       description = 'API Testing for Humans',
       long_description = LONG_DESCRIPTION,

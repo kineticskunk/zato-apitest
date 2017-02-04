@@ -16,6 +16,7 @@ import os, sys, tempfile, uuid
 
 # Click
 import click
+click.disable_unicode_literals_warning = True
 
 # Zato
 from zato.apitest import init as _init, run as _run

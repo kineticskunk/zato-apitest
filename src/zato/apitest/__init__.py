@@ -24,3 +24,7 @@ NO_VALUE = 'no-value-{}'.format(uuid4().hex)
 
 class AUTH:
     BASIC_AUTH = 'basic-auth'
+
+class CHANNEL_TYPE:
+    HTTP = 'http'
+    WEB_SOCKETS = 'web-sockets'

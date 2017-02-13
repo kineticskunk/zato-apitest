@@ -31,6 +31,11 @@ def handle(path, args=None):
     if args:
         behave_options += ' ' + ' '.join(args)
 
+    tags = os.environ.get('ZATO_APITEST_TAGS')
+    if tags:
+        behave_options += ' --tags '
+        behave_options += ','.join(tags.split())
+
     conf = Configuration(behave_options)
     conf.paths = [os.path.join(path, 'features')]
     runner = Runner(conf)

@@ -11,6 +11,9 @@ Licensed under LGPLv3, see LICENSE.txt for terms and conditions.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+# stdlib
+from ast import literal_eval
+
 # base32_crockford
 from base32_crockford import decode as crockford_decode
 
@@ -54,6 +57,11 @@ def set_pointer(ctx, path, value):
 @util.obtain_values
 def given_json_pointer_in_request_is(ctx, path, value):
     set_pointer(ctx, path, value)
+
+@given('JSON Pointer "{path}" in request is "{value}" (with literal_eval)')
+@util.obtain_values
+def given_json_pointer_in_request_is_with_literal_eval(ctx, path, value):
+    set_pointer(ctx, path, literal_eval(value))
 
 @given('JSON Pointer "{path}" in request is a UUID')
 @util.obtain_values
@@ -148,6 +156,11 @@ def assert_value(ctx, path, value, wrapper=None):
 def then_json_pointer_is(ctx, path, value):
     return assert_value(ctx, path, value)
 
+@then('JSON Pointer "{path}" is "{value}" (with literal_eval)')
+@util.obtain_values
+def then_json_pointer_is_with_literal_eval(ctx, path, value):
+    return assert_value(ctx, path, literal_eval(value))
+
 @then('JSON Pointer "{path}" is JSON "{value}"')
 @needs_json
 @util.obtain_values
@@ -204,7 +217,7 @@ def then_json_pointer_isnt_empty(ctx, path):
 
 @then('JSON Pointer "{path}" isn\'t an empty list')
 @util.obtain_values
-def then_json_pointer_is_boolean_true(ctx, path):
+def then_json_pointer_isnt_an_empty_list(ctx, path):
     actual = get_pointer(ctx.zato.response.data_impl, path, [])
     assert isinstance(actual, list), 'Path `{}` should be a list'.format(path)
     assert actual, 'Path `{}` should not be an empty list'.format(path)

@@ -44,7 +44,7 @@ from .. import AUTH, INVALID, NO_VALUE
 
 @when('the URL is invoked')
 def when_the_url_is_invoked(ctx, adapters=None):
-    raise ValueError(ctx.zato)
+    #raise ValueError(ctx.zato)
     adapters = adapters or []
     method = ctx.zato.request.get('method', 'GET')
     address = ctx.zato.request.get('address')

@@ -8,7 +8,7 @@ default: demo
 
 install:
 	virtualenv $(CURDIR)/$(ENV_NAME)
-	$(BIN_DIR)/pip install -r $(CURDIR)/requirements.txt
+	$(BIN_DIR)/pip install --no-cache-dir -r $(CURDIR)/requirements.txt
 	$(BIN_DIR)/python $(CURDIR)/setup.py develop
 	$(BIN_DIR)/pip install -e $(CURDIR)/.
 

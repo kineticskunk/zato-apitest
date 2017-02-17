@@ -32,10 +32,19 @@ from dateutil.parser import parse as parse_dt
 # six
 from six.moves import cStringIO as StringIO
 
+# YAML
+from yaml.representer import SafeRepresenter
+
 # Zato
 from zato.apitest import version
+from zato.vault.client import Client
 
 random.seed()
+
+def represent_vault_client(self, data):
+    return self.represent_scalar(u'tag:yaml.org,2002:str', str(data))
+
+SafeRepresenter.add_multi_representer(Client, represent_vault_client)
 
 # Singleton used for storing Zato's own context across features and steps.
 # Not thread/greenlet-safe so this will have to be added if need be.
@@ -46,17 +55,35 @@ context = Bunch()
 def get_value_from_environ(ctx, name):
     return os.environ[name]
 
+# ################################################################################################################################
+
 def get_value_from_ctx(ctx, name):
     return ctx.zato.user_ctx[name]
+
+# ################################################################################################################################
 
 def get_value_from_config(ctx, name):
     return ctx.zato.user_config[name]
 
+# ################################################################################################################################
+
+def get_value_from_vault(ctx, name):
+    """ Returns a selected value from Vault. Will use default Vault connection unless a specific one was requested.
+    """
+    client = ctx.zato.vault_config['default'].client
+    path = name.replace('vault:', '', 1)
+    return client.read(path)['data']['value']
+
+# ################################################################################################################################
+
 config_functions = {
     '$': get_value_from_environ,
     '#': get_value_from_ctx,
-    '@': get_value_from_config
+    '@': get_value_from_config,
+    'vault:': get_value_from_vault,
 }
+
+# ################################################################################################################################
 
 def obtain_values(func):
     """ Functions decorated with this one will be able to obtain values from config sources prefixed with $, # or @.
@@ -70,10 +97,11 @@ def obtain_values(func):
 
         for kwarg, value in kwargs.items():
             if value:
-                config_key = value[0]
-                if config_key in config_functions:
-                    config_func = config_functions[config_key]
-                    kwargs[kwarg] = config_func(ctx, value[1:])
+                for config_key in config_functions:
+                    if value.decode('utf-8').startswith(config_key):
+                        config_func = config_functions[config_key]
+                        kwargs[kwarg] = config_func(ctx, value[1:] if len(config_key) == 1 else value)
+                        break
                 else:
                     kwargs[kwarg] = re.sub(r'((\$|\#|\@)\{(\w+)\})', replacer, value)
 
@@ -91,9 +119,20 @@ def new_context(old_ctx, environment_dir, user_config=None):
     _context.request = Bunch()
     _context.request.headers = {'User-Agent':'zato-apitest/{} (+https://zato.io)'.format(version)}
     _context.request.ns_map = {}
-    _context.user_config = user_config if user_config is not None else bunchify(
-        ConfigObj(os.path.join(_context.environment_dir, 'config.ini')))['user']
     _context.cassandra_ctx = {}
+
+    config_ini = bunchify(ConfigObj(os.path.join(_context.environment_dir, 'config.ini')))
+    _context.user_config = user_config if user_config is not None else config_ini['user']
+    _context.vault_config = config_ini.get('vault', {})
+
+    for name, conn_info in _context.vault_config.items():
+
+        if conn_info.token == 'invalid':
+            continue
+
+        client = Client(conn_info.address, conn_info.token)
+        client.ping()
+        _context.vault_config[name]['client'] = client
 
     context.clear()
     context.update(_context)

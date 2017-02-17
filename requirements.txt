@@ -29,4 +29,5 @@ six>=1.6.1
 sqlalchemy>=0.9.7
 wsgiref>=0.1.2
 pysandra-unit>=0.4.1
-zato-websocket-client>=1.2
+zato-websocket-client
+zato-vault-client

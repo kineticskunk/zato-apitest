@@ -60,6 +60,11 @@ options=--format pretty --no-source --no-timings
 
 [user]
 sample=Hello
+
+[vault]
+[[default]]
+address=http://localhost:8200
+token=invalid
 """
 
 DEMO_FEATURE = """

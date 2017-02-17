@@ -25,7 +25,6 @@ from behave import given, when
 # Zato
 from .. import util
 from .. import CHANNEL_TYPE
-from zato.websocket.client import Client
 
 # ###############################################################################################################################
 
@@ -59,16 +58,15 @@ def when_i_upload_a_zato_service_from_path_to_conn_details(ctx, module_path, con
 @given('Zato WebSockets credentials "{username}" and "{secret}"')
 @util.obtain_values
 def given_zato_websockets_credentials(ctx, username, secret):
-    #print(Client, ctx, username, secret)
     ctx.zato.zato_channel_type = CHANNEL_TYPE.WEB_SOCKETS
+    ctx.zato.zato_ws_username = username
+    ctx.zato.zato_ws_secret = secret
 
 # ###############################################################################################################################
 
 @given('Zato WebSockets service "{service}"')
 @util.obtain_values
-def given_zato_websockets_credentials(ctx, service):
-    #print(ctx, service)
-    #raise ValueError(ctx.zato)
-    pass
+def given_zato_websockets_service(ctx, service):
+    ctx.zato.zato_ws_service = service
 
 # ###############################################################################################################################

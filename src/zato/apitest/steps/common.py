@@ -16,6 +16,8 @@ import ast
 import json
 import time
 import os
+from datetime import datetime
+from logging import getLogger
 
 # Behave
 from behave import given, when, then
@@ -38,13 +40,43 @@ from requests.auth import HTTPBasicAuth
 
 # Zato
 from .. import util
-from .. import AUTH, INVALID, NO_VALUE
+from .. import AUTH, CHANNEL_TYPE, INVALID, NO_VALUE
+from zato.websocket.client import Client, Config
+
+# ################################################################################################################################
+
+logger = getLogger(__name__)
 
 # ################################################################################################################################
 
 @when('the URL is invoked')
 def when_the_url_is_invoked(ctx, adapters=None):
-    #raise ValueError(ctx.zato)
+
+    if ctx.zato.get('zato_channel_type') == CHANNEL_TYPE.WEB_SOCKETS:
+        invoke_zato_web_sockets_service(ctx)
+    else:
+        invoke_http(ctx, adapters)
+
+    # If no response_format is set, assume it's the same as the request format.
+    # If the request format hasn't been specified either, assume 'RAW'.
+    response_format = ctx.zato.request.get('response_format', ctx.zato.request.get('format', 'RAW'))
+
+    if response_format == 'XML':
+        ctx.zato.response.data_impl = etree.fromstring(ctx.zato.response.data_text.encode('utf-8'))
+
+    elif response_format == 'JSON':
+        ctx.zato.response.data_impl = json.loads(ctx.zato.response.data_text)
+
+    elif response_format == 'RAW':
+        ctx.zato.response.data_impl = ctx.zato.response.data_text
+
+    elif response_format == 'FORM':
+        ctx.zato.response.data_impl = ctx.zato.response.data_text
+
+# ################################################################################################################################
+
+def invoke_http(ctx, adapters):
+
     adapters = adapters or []
     method = ctx.zato.request.get('method', 'GET')
     address = ctx.zato.request.get('address')
@@ -86,21 +118,32 @@ def when_the_url_is_invoked(ctx, adapters=None):
     ctx.zato.response.data = s.request(
         method, '{}{}{}'.format(address, url_path, qs), data=data, files=files, headers=ctx.zato.request.headers, auth=auth)
 
-    # if the reply format is unset, assume it's the same as the request format
-    # if the request format hasn't been specified either, assume 'RAW"
-    response_format = ctx.zato.request.get('response_format', ctx.zato.request.get('format', 'RAW'))
+    ctx.zato.response.data_text = ctx.zato.response.data.text
 
-    if response_format == 'XML':
-        ctx.zato.response.data_impl = etree.fromstring(ctx.zato.response.data.text.encode('utf-8'))
+# ################################################################################################################################
 
-    elif response_format == 'JSON':
-        ctx.zato.response.data_impl = json.loads(ctx.zato.response.data.text)
+def invoke_zato_web_sockets_service(ctx):
 
-    elif response_format == 'RAW':
-        ctx.zato.response.data_impl = ctx.zato.response.data.text
+    def on_request_from_zato(msg):
+        logger.info('Message received %r', msg.data)
 
-    elif response_format == 'FORM':
-        ctx.zato.response.data_impl = ctx.zato.response.data.text
+    config = Config()
+    config.client_name = 'zato-apitest'
+    config.client_id = '{}.{}'.format(config.client_name, datetime.utcnow().isoformat())
+    config.address = '{}{}'.format(ctx.zato.request.address, ctx.zato.request.url_path)
+    config.username = ctx.zato.zato_ws_username
+    config.secret = ctx.zato.zato_ws_secret
+    config.on_request_callback = on_request_from_zato
+
+    client = Client(config)
+    client.run()
+
+    if not client.is_authenticated:
+        raise Exception('Client `{}` could not authenticate with {} (Incorrect credentials? Server not running?)'.format(
+            config.username, config.address))
+
+    ctx.zato.response = Bunch()
+    ctx.zato.response.data_text = json.dumps(client.invoke(ctx.zato.request.data_impl).data)
 
 # ################################################################################################################################
 

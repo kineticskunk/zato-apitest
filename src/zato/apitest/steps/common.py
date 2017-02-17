@@ -455,7 +455,7 @@ def needs_json(func):
         return func(ctx, **kwargs)
     return inner
 
-def json_response_is_equal_to(ctx, expected):
+def _response_is_equal_to(ctx, expected):
     assert_equals(expected, ctx.zato.response.data_impl)
     return True
 
@@ -463,13 +463,19 @@ def json_response_is_equal_to(ctx, expected):
 @needs_json
 @util.obtain_values
 def then_response_is_equal_to_that_from(ctx, path):
-    return json_response_is_equal_to(ctx, json.loads(util.get_data(ctx, 'response', path)))
+    return _response_is_equal_to(ctx, json.loads(util.get_data(ctx, 'response', path)))
+
+@then('JSON response is equal to "{expected}"')
+@needs_json
+@util.obtain_values
+def then_response_is_equal_to(ctx, expected):
+    return _response_is_equal_to(ctx, json.loads(expected))
 
 @then('response is equal to "{expected}"')
 @needs_json
 @util.obtain_values
 def then_response_is_equal_to(ctx, expected):
-    return json_response_is_equal_to(ctx, json.loads(expected))
+    return _response_is_equal_to(ctx, expected)
 
 # ################################################################################################################################
 

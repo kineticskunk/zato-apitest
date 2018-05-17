@@ -1,3 +1,4 @@
+six>=1.11
 argparse>=1.2.1
 arrow>=0.4.2
 base32-crockford>=0.2.0
@@ -25,7 +26,7 @@ pyflakes<1.7.0,>=1.5.0
 python-dateutil>=2.2
 requests>=2.3.0
 requests-testadapter>=0.3.0
-six>=1.11
 sqlalchemy>=0.9.7
 pysandra-unit>=0.4.1
 zato-websocket-client>=1.2
+wsgiref>=0.1.2
